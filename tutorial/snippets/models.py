@@ -24,3 +24,14 @@ class Snippet(models.Model):
 	class Meta:
 		ordering = ('created',)
 
+	owner = models.ForeignKey('auth.User', related_name = 'snippets')
+	highlighted = models.TextField()
+
+	def save(self, *args, **kwargs):
+		lexer = get_lexer_by_name(self.language)
+		linenos = self.linenos and 'table' or False
+		options = self.title and {'title': self.title} or {}
+		formatter = HtmlFormatter(style=self.style, linenos=linenos,
+								  full=True, **options)
+		self.highlighted = highlight(self.code, lexer, formatter)
+		super(Snippet, self).save(*args, **kwargs)
